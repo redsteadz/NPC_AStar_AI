@@ -108,22 +108,31 @@ vector<Coord> Astar(Coord start, Coord goal) {
 };
 
 Color BlockColor(int i, int j) {
-  if (grid[i][j] == 1)
-    return RED;
-  else if (grid[i][j] >= 2)
-    return BLUE;
-  else
+  unsigned char val = min(grid[i][j] * 10, 255);
+  // if (grid[i][j] == 1)
+  //   return RED;
+  // else if (grid[i][j] >= 2)
+  //   return {0, val, 234, 255};
+  // else
     return GRAY;
 }
-
+int frame = 0;
 int GAP_SIZE = 5;
 void drawGrid() {
   for (int i = 0; i < 40; i++) {
     for (int j = 0; j < 40; j++) {
       Color color = BlockColor(i, j);
       DrawRectangle(i * 20, j * 20, 20 - GAP_SIZE, 20 - GAP_SIZE, color);
+      if (grid[i][j] > 1 && frame == 160) {
+        grid[i][j] = max(0, grid[i][j] - 2);
+        if (grid[i][j] == 1)
+          grid[i][j] = 0;
+        cout << i << " " << j << " = " << grid[i][j] << endl;
+      }
     }
   }
+  if (frame == 160) frame = 0;
+  frame++;
 }
 
 void HandlClicks() {
@@ -154,6 +163,10 @@ class Entity {
 
       // Adding points to the list (ensure duplicates are not added, if y1 ==
       // y2, add only once)
+      // Check that the points are within the bounds of the grid
+      if (x < 0 || x >= 40 || y1 < 0 || y1 >= 40 || y2 < 0 || y2 >= 40) {
+        continue;
+      }
       points.emplace_back(x, y1);
       if (y1 != y2) {
         points.emplace_back(x, y2);
@@ -178,6 +191,19 @@ public:
         int probability = GetRandomValue(1, 10);
         if (probability == 1) {
           // Place the pellet randomly in Manhattan circle
+          vector<pair<int, int>> points =
+              generate_manhattan_circle(c.x, c.y, 2);
+          for (auto p : points) {
+            if (p.first < 0 || p.first >= 40 || p.second < 0 ||
+                p.second >= 40) {
+              continue;
+            }
+            // Theres a 10% chance that the entity will place the breadcrumb
+            // in the point
+            if (GetRandomValue(1, 10) <= 2) {
+              grid[p.first][p.second] += 5;
+            }
+          }
         }
       }
       start = goal;
@@ -198,7 +224,7 @@ public:
     for (int i = pathIndex; i < path.size(); i++) {
       Coord c = path[i];
       // cout << "(" << c.x << ", " << c.y << ") ";
-      DrawRectangle(c.x * 20, c.y * 20, 20 - GAP_SIZE, 20 - GAP_SIZE, WHITE);
+      // DrawRectangle(c.x * 20, c.y * 20, 20 - GAP_SIZE, 20 - GAP_SIZE, WHITE);
     }
     DrawRectangle(start.x * 20, start.y * 20, 20 - GAP_SIZE, 20 - GAP_SIZE,
                   GREEN);
@@ -209,13 +235,19 @@ int main(int argc, char *argv[]) {
   InitWindow(800, 800, "Raylib");
   memset(grid, 0, sizeof(grid));
   SetTargetFPS(60);
-  Entity entity;
+  Entity e1;
+  Entity e2;
+  Entity e3;
+  Entity e4;
   while (!WindowShouldClose()) {
     HandlClicks();
     BeginDrawing();
     ClearBackground(BLACK);
     drawGrid();
-    entity.Draw();
+    e1.Draw();
+    e2.Draw();
+    e3.Draw();
+    e4.Draw();
     EndDrawing();
   }
   CloseWindow();
