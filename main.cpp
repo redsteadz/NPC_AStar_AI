@@ -58,18 +58,20 @@ vector<Coord> Astar(Coord start, Coord goal) {
   priority_queue<Node> openSet;
   unordered_map<Coord, int> gCost; // Tracks the best cost to a Coord
   unordered_map<Coord, Coord> cameFrom;
+  unordered_set<Coord> closedSet;
   Node startNode = Node(start, 0, CostCalc(start, goal));
   openSet.push(startNode);
   gCost[start] = 0;
 
   while (!openSet.empty()) {
-    Node currentNode = openSet.top();
+    const Node currentNode = openSet.top();
     Coord currentCoord = currentNode.loc;
     openSet.pop();
 
     if (currentCoord == goal) {
       // cout << "Found the goal with cost: " << currentNode->cost << endl;
       vector<Coord> path;
+      cout << gCost[goal] << endl;
       while (currentCoord != start) {
         path.push_back(currentCoord);
         currentCoord = cameFrom[currentCoord];
@@ -82,7 +84,7 @@ vector<Coord> Astar(Coord start, Coord goal) {
       Coord newCoord = {currentCoord.x + dx[k], currentCoord.y + dy[k]};
 
       if (newCoord.x < 0 || newCoord.y < 0 || newCoord.x >= 40 ||
-          newCoord.y >= 40 || grid[newCoord.x][newCoord.y] == 1) {
+          newCoord.y >= 40 || grid[newCoord.x][newCoord.y] == 1 || closedSet.count(newCoord) != 0){
         continue;
       }
 
@@ -100,20 +102,18 @@ vector<Coord> Astar(Coord start, Coord goal) {
         cameFrom[newCoord] = currentCoord;
       }
     }
+    closedSet.insert(currentCoord);
   }
-
-  // Deallocation of startNode and any other nodes not managed by openSet would
-  // be necessary
   return vector<Coord>();
 };
 
 Color BlockColor(int i, int j) {
-  unsigned char val = min(grid[i][j] * 10, 255);
-  // if (grid[i][j] == 1)
-  //   return RED;
-  // else if (grid[i][j] >= 2)
-  //   return {0, val, 234, 255};
-  // else
+  unsigned char val = min(grid[i][j] * 50, 255);
+  if (grid[i][j] == 1)
+    return RED;
+  else if (grid[i][j] >= 2)
+    return {0, val, 234, 255};
+  else
     return GRAY;
 }
 int frame = 0;
@@ -127,7 +127,7 @@ void drawGrid() {
         grid[i][j] = max(0, grid[i][j] - 2);
         if (grid[i][j] == 1)
           grid[i][j] = 0;
-        cout << i << " " << j << " = " << grid[i][j] << endl;
+        // cout << i << " " << j << " = " << grid[i][j] << endl;
       }
     }
   }
@@ -200,7 +200,7 @@ public:
             }
             // Theres a 10% chance that the entity will place the breadcrumb
             // in the point
-            if (GetRandomValue(1, 10) <= 2) {
+            if (GetRandomValue(1, 10) <= 1) {
               grid[p.first][p.second] += 5;
             }
           }
@@ -212,7 +212,7 @@ public:
       reverse(path.begin(), path.end());
       pathIndex = 0;
     }
-    if (frame == 5) {
+    if (frame == 10) {
       frame = 0;
       start = path[pathIndex];
       pathIndex++;
@@ -235,19 +235,14 @@ int main(int argc, char *argv[]) {
   InitWindow(800, 800, "Raylib");
   memset(grid, 0, sizeof(grid));
   SetTargetFPS(60);
-  Entity e1;
-  Entity e2;
-  Entity e3;
-  Entity e4;
+  Entity e[20];
   while (!WindowShouldClose()) {
     HandlClicks();
     BeginDrawing();
     ClearBackground(BLACK);
-    drawGrid();
-    e1.Draw();
-    e2.Draw();
-    e3.Draw();
-    e4.Draw();
+    // drawGrid();
+    for (int i = 0; i < 20; i++) e[i].Draw();
+    // e[0].Draw();
     EndDrawing();
   }
   CloseWindow();
